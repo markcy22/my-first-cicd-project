@@ -1,0 +1,38 @@
+name: My First CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Verify HTML file exists
+      run: |
+        echo "Checking if index.html exists..."
+        if [ -f "index.html" ]; then
+          echo "✅ index.html found!"
+        else
+          echo "❌ index.html not found!"
+          exit 1
+        fi
+    
+    - name: Check HTML structure
+      run: |
+        echo "Checking HTML structure..."
+        if grep -q "<title>My First CI/CD Project</title>" index.html; then
+          echo "✅ HTML structure looks good!"
+        else
+          echo "❌ HTML structure issue detected!"
+          exit 1
+        fi
+    
+    - name: Pipeline Success
+      run: echo "🎉 All checks passed! Ready for deployment!"
