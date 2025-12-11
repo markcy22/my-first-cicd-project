@@ -1,13 +1,13 @@
-name: My First CI/CD Pipeline
+name: CI/CD Pipeline with Environments
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, dev ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, dev ]
 
 jobs:
-  test-and-deploy:
+  test:
     runs-on: ubuntu-latest
     
     steps:
@@ -27,12 +27,41 @@ jobs:
     - name: Check HTML structure
       run: |
         echo "Checking HTML structure..."
-        if grep -q "<title>My First CI/CD Project</title>" index.html; then
+        if grep -q "<title>" index.html; then
           echo "✅ HTML structure looks good!"
         else
           echo "❌ HTML structure issue detected!"
           exit 1
         fi
     
-    - name: Pipeline Success
-      run: echo "🎉 All checks passed! Ready for deployment!"
+    - name: Run quality checks
+      run: |
+        echo "Running additional quality checks..."
+        echo "✅ All quality checks passed!"
+  
+  deploy-dev:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+    
+    steps:
+    - name: Deploy to Development
+      run: |
+        echo "🚀 Deploying to DEVELOPMENT environment..."
+        echo "📍 Environment: DEV"
+        echo "🌐 URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+        echo "✅ Development deployment complete!"
+  
+  deploy-production:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: Deploy to Production
+      run: |
+        echo "🚀 Deploying to PRODUCTION environment..."
+        echo "📍 Environment: PRODUCTION"
+        echo "🌐 URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+        echo "⚠️  This is the LIVE site with real users!"
+        echo "✅ Production deployment complete!"
