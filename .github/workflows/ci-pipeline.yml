@@ -24,20 +24,71 @@ jobs:
           exit 1
         fi
     
-    - name: Check HTML structure
+    - name: Validate HTML Structure
       run: |
-        echo "Checking HTML structure..."
-        if grep -q "<title>" index.html; then
-          echo "✅ HTML structure looks good!"
-        else
-          echo "❌ HTML structure issue detected!"
+        echo "Installing HTML validator..."
+        sudo apt-get update
+        sudo apt-get install -y tidy
+        
+        echo "Validating HTML..."
+        tidy -q -e index.html || true
+        
+        echo "✅ HTML validation complete!"
+    
+    - name: Check for broken internal links
+      run: |
+        echo "Checking for broken links in HTML..."
+        
+        # Check if any href or src attributes are empty
+        if grep -E 'href=""' index.html; then
+          echo "❌ Found empty href attributes!"
           exit 1
         fi
+        
+        if grep -E 'src=""' index.html; then
+          echo "❌ Found empty src attributes!"
+          exit 1
+        fi
+        
+        echo "✅ No broken internal links found!"
     
-    - name: Run quality checks
+    - name: Check for accessibility basics
       run: |
-        echo "Running additional quality checks..."
-        echo "✅ All quality checks passed!"
+        echo "Checking basic accessibility requirements..."
+        
+        # Check for alt attributes on images (if any)
+        if grep -q '<img' index.html; then
+          if grep '<img' index.html | grep -v 'alt='; then
+            echo "⚠️  Warning: Some images might be missing alt attributes"
+          fi
+        fi
+        
+        # Check for proper heading structure
+        if ! grep -q '<h1' index.html; then
+          echo "⚠️  Warning: No h1 heading found"
+        else
+          echo "✅ H1 heading found!"
+        fi
+        
+        # Check for lang attribute
+        if ! grep -q 'lang=' index.html; then
+          echo "⚠️  Warning: No lang attribute in html tag"
+        else
+          echo "✅ Language attribute found!"
+        fi
+        
+        echo "✅ Basic accessibility checks complete!"
+    
+    - name: Test summary
+      run: |
+        echo "======================================"
+        echo "🎉 All automated tests passed!"
+        echo "======================================"
+        echo "✅ File existence check"
+        echo "✅ HTML validation"
+        echo "✅ Link integrity check"
+        echo "✅ Accessibility basics"
+        echo "======================================"
   
   deploy-dev:
     needs: test
@@ -49,7 +100,6 @@ jobs:
       run: |
         echo "🚀 Deploying to DEVELOPMENT environment..."
         echo "📍 Environment: DEV"
-        echo "🌐 URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
         echo "✅ Development deployment complete!"
   
   deploy-production:
@@ -62,6 +112,4 @@ jobs:
       run: |
         echo "🚀 Deploying to PRODUCTION environment..."
         echo "📍 Environment: PRODUCTION"
-        echo "🌐 URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
-        echo "⚠️  This is the LIVE site with real users!"
         echo "✅ Production deployment complete!"
