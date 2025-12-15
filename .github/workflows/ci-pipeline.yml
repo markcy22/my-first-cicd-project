@@ -63,9 +63,11 @@ jobs:
           fi
         fi
         
-        # Check for proper heading structure
+        # Check for proper heading structure (STRICT - will fail pipeline)
         if ! grep -q '<h1' index.html; then
-          echo "⚠️  Warning: No h1 heading found"
+          echo "❌ ERROR: No h1 heading found - accessibility requirement!"
+          echo "Every page must have exactly one h1 heading for screen readers and SEO."
+          exit 1
         else
           echo "✅ H1 heading found!"
         fi
